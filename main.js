@@ -10,7 +10,7 @@ const keys = [];
 
 const raquette = {
     x: 100,
-    y: canvas.height-5,
+    y: canvas.height - 5,
     color: 'red',
     width: 100,
     height: 5,
@@ -18,11 +18,32 @@ const raquette = {
     moving: false
 }
 
-function Circle(x, y, radius) {
+const imgWidth = 75;
+const imgHeight = 20;
+const imgPadding = 10;
+const imgMarginTop = 50;
+const imgMarginLeft = 25;
+const imgRowCount = 5;
+const imgColumnCount = 9;
 
-    var dx = Math.random() * 2, dy = Math.random() * 2;
-    this.x = x;
-    this.y = y;
+var score = 0;
+
+var apples = [];
+for (var i = 0; i < imgColumnCount; i++) {
+    apples[i] = [];
+    for (var j = 0; j < imgRowCount; j++) {
+        apples[i][j] = { x: 0, y: 0, status: 1 };
+    }
+}
+
+function Circle() {
+
+    var initValues = [-2,-1,1,2];
+    this.dx = initValues[Math.round(Math.random()*2)];
+    this.dy = Math.random()*2;
+    this.x = canvas.width/2;
+    this.y = 300;
+    this.radius = 10
 
     var red = Math.random() * 255,
         green = Math.random() * 255,
@@ -31,7 +52,7 @@ function Circle(x, y, radius) {
 
     this.draw = function () {
         ctx.beginPath();
-        ctx.arc(this.x, this.y, radius, 0, Math.PI * 2, false);
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         ctx.fillStyle = 'rgb(' + red + ',' + green + ',' + blue + ')';
         ctx.fill();
     }
@@ -39,42 +60,42 @@ function Circle(x, y, radius) {
     this.update = function () {
 
         // Rebon avec les mures
-        if (this.x + radius > canvas.width || this.x - radius < 0)
-            dx = -dx;
+        if (this.x + this.radius > canvas.width || this.x - this.radius < 0)
+            this.dx = -this.dx;
 
         // Rebon avec le plafond
-        if (this.y - radius < 0)
-            dy = -dy;
+        if (this.y - this.radius < 0)
+            this.dy = -this.dy;
 
         // Rattraper la ball avec le cote gauche de la raquette
-        if (this.y + radius >= raquette.y && this.y + radius < raquette.y + raquette.height &&
-            Math.abs(this.x) + radius >= raquette.x && Math.abs(this.x) + radius < raquette.x + raquette.width/2) {
-            dy = -dy;
-            (dx>0) ? dx = -dx : dx = dx;
+        if (this.y + this.radius >= raquette.y && this.y + this.radius < raquette.y + raquette.height &&
+            Math.abs(this.x) + this.radius >= raquette.x && Math.abs(this.x) + this.radius < raquette.x + raquette.width / 2) {
+            this.dy = -this.dy;
+            (this.dx > 0) ? this.dx = -this.dx : this.dx = this.dx;
         }
 
         // Rattraper la ball avec le cote groit de la raquette
-        if (this.y + radius >= raquette.y && this.y + radius < raquette.y + raquette.height &&
-            Math.abs(this.x) + radius > raquette.x + raquette.width/2 && Math.abs(this.x) + radius <= raquette.x + raquette.width) {
-            dy = -dy;
-            (dx<0) ? dx = -dx : dx = dx
+        if (this.y + this.radius >= raquette.y && this.y + this.radius < raquette.y + raquette.height &&
+            Math.abs(this.x) + this.radius > raquette.x + raquette.width / 2 && Math.abs(this.x) + this.radius <= raquette.x + raquette.width) {
+            this.dy = -this.dy;
+            (this.dx < 0) ? this.dx = -this.dx : this.dx = this.dx
         }
 
         // Si la ball depasse la raquette
         if (this.y > canvas.height) {
-            dx = dy = 0;
+            this.dx = this.dy = 0;
             console.log('Game Over !!')
         }
 
-        this.x += dx;
-        this.y += dy;
-        
+        this.x += this.dx;
+        this.y += this.dy;
+
         this.draw();
     }
 }
 
 
-var circle = new Circle(700, 300, 10)
+var circle = new Circle()
 
 
 function animate() {
@@ -83,6 +104,11 @@ function animate() {
     circle.update();
     createRaquette();
     moveRaquette();
+
+    drawApples();
+    collisionDetection();
+    drawScoreText();
+
 }
 
 
@@ -103,6 +129,44 @@ function moveRaquette() {
     if (keys[39] && raquette.x + raquette.width < canvas.width) {
         raquette.x += raquette.speed;
     }
+}
+
+function drawApples() {
+    for (var i = 0; i < imgColumnCount; i++) {
+        for (var j = 0; j < imgRowCount; j++) {
+            if (apples[i][j].status == 1) {
+                var imgX = (i * (imgWidth + imgPadding)) + imgMarginLeft;
+                var imgY = (j * (imgHeight + imgPadding)) + imgMarginTop;
+                apples[i][j].x = imgX;
+                apples[i][j].y = imgY;
+
+                var img = new Image();
+                img.src = 'apple.png';
+                ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+            }
+        }
+    }
+}
+
+function collisionDetection() {
+    for (var i = 0; i < imgColumnCount; i++) {
+        for (var j = 0; j < imgRowCount; j++) {
+            var apple = apples[i][j];
+            if (apple.status == 1) {
+                if (circle.x > apple.x && circle.x < apple.x + imgWidth && circle.y > apple.y && circle.y < apple.y + imgHeight) {
+                    circle.dy = -circle.dy;
+                    score++;
+                    apple.status = 0;
+                }
+            }
+        }
+    }
+}
+
+function drawScoreText(){
+    ctx.font = "16px Fantasy";
+    ctx.fillStyle = "red";
+    ctx.fillText("Score: "+score, 8, 20);
 }
 
 window.addEventListener('keydown', function (e) {
