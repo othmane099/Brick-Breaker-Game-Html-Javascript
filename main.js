@@ -18,30 +18,14 @@ const raquette = {
     moving: false
 }
 
-const imgWidth = 75;
-const imgHeight = 20;
-const imgPadding = 10;
-const imgMarginTop = 50;
-const imgMarginLeft = 25;
-const imgRowCount = 5;
-const imgColumnCount = 9;
-
 var score = 0;
-
-var apples = [];
-for (var i = 0; i < imgColumnCount; i++) {
-    apples[i] = [];
-    for (var j = 0; j < imgRowCount; j++) {
-        apples[i][j] = { x: 0, y: 0, status: 1 };
-    }
-}
 
 function Circle() {
 
-    var initValues = [-2,-1,1,2];
-    this.dx = initValues[Math.round(Math.random()*2)];
-    this.dy = Math.random()*2;
-    this.x = canvas.width/2;
+    var initValues = [-2, -1, 1, 2];
+    this.dx = initValues[Math.round(Math.random() * 2)];
+    this.dy = Math.random() * 2;
+    this.x = canvas.width / 2;
     this.y = 300;
     this.radius = 10
 
@@ -50,14 +34,14 @@ function Circle() {
         blue = Math.random() * 255;
 
 
-    this.draw = function () {
+    this.draw = () => {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         ctx.fillStyle = 'rgb(' + red + ',' + green + ',' + blue + ')';
         ctx.fill();
     }
 
-    this.update = function () {
+    this.update = () => {
 
         // Rebon avec les mures
         if (this.x + this.radius > canvas.width || this.x - this.radius < 0)
@@ -94,9 +78,61 @@ function Circle() {
     }
 }
 
-
 var circle = new Circle()
 
+function Apple(x, y) {
+    this.img = new Image();
+    this.img.src = 'apple.png';
+    this.x = x;
+    this.y = y;
+    this.width = 75;
+    this.height = 20;
+    this.appearing = true;
+
+    this.drawApple = () => {
+        if (this.appearing) {
+            ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
+        }
+    }
+
+    this.detectCollision = () => {
+        if (this.appearing == true) {
+            if (circle.x > this.x && circle.x < this.x + this.width && circle.y > this.y && circle.y < this.y + this.height) {
+                circle.dy = -circle.dy;
+                score++;
+                this.appearing = false;
+            }
+        }
+    }
+}
+
+const appleWidth = 75;
+const appleHight = 20;
+const padding = 10;
+const marginTop = 50;
+const marginLeft = 25;
+const rows = 5;
+const cols = 9;
+var posX, posY;
+
+var apples = [];
+for (var i = 0; i < cols; i++) {
+    apples[i] = [];
+    for (var j = 0; j < rows; j++) {
+        posX = (i * (appleWidth + padding)) + marginLeft;
+        posY = (j * (appleHight + padding)) + marginTop;
+        apples[i][j] = new Apple(posX,posY);
+    }
+}
+
+function drawApples() {
+    for (var i = 0; i < cols; i++) {
+        for (var j = 0; j < rows; j++) {
+            apples[i][j].drawApple();
+            apples[i][j].detectCollision();
+        }
+    }
+}
 
 function animate() {
     requestAnimationFrame(animate);
@@ -104,15 +140,14 @@ function animate() {
     circle.update();
     createRaquette();
     moveRaquette();
-
     drawApples();
-    collisionDetection();
     drawScoreText();
 
 }
 
 
 animate();
+
 
 
 
@@ -131,42 +166,11 @@ function moveRaquette() {
     }
 }
 
-function drawApples() {
-    for (var i = 0; i < imgColumnCount; i++) {
-        for (var j = 0; j < imgRowCount; j++) {
-            if (apples[i][j].status == 1) {
-                var imgX = (i * (imgWidth + imgPadding)) + imgMarginLeft;
-                var imgY = (j * (imgHeight + imgPadding)) + imgMarginTop;
-                apples[i][j].x = imgX;
-                apples[i][j].y = imgY;
 
-                var img = new Image();
-                img.src = 'apple.png';
-                ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
-            }
-        }
-    }
-}
-
-function collisionDetection() {
-    for (var i = 0; i < imgColumnCount; i++) {
-        for (var j = 0; j < imgRowCount; j++) {
-            var apple = apples[i][j];
-            if (apple.status == 1) {
-                if (circle.x > apple.x && circle.x < apple.x + imgWidth && circle.y > apple.y && circle.y < apple.y + imgHeight) {
-                    circle.dy = -circle.dy;
-                    score++;
-                    apple.status = 0;
-                }
-            }
-        }
-    }
-}
-
-function drawScoreText(){
+function drawScoreText() {
     ctx.font = "16px Fantasy";
     ctx.fillStyle = "red";
-    ctx.fillText("Score: "+score, 8, 20);
+    ctx.fillText("Score: " + score, 8, 20);
 }
 
 window.addEventListener('keydown', function (e) {
