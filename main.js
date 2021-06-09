@@ -8,8 +8,16 @@ canvas.height = 500;
 
 const keys = [];
 
-const raquette = {
-    x: 100,
+const appleWidth = 75;
+const appleHight = 20;
+const padding = 10;
+const marginTop = 50;
+const marginLeft = 25;
+const cols = 9;
+let rows = 5;
+
+let raquette = {
+    x: canvas.width / 2 - 50,
     y: canvas.height - 5,
     color: 'red',
     width: 100,
@@ -18,21 +26,113 @@ const raquette = {
     moving: false
 }
 
-var score = 0;
+
+let score = 0;
+let difficulty = 1;
+let choice = 0;
+let win = false;
+
+function Btn(x, y, width, height, name) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.name = name
+
+
+    this.handleOnClick = (level) => {
+
+        switch (level) {
+            case 0:
+                choice = 1
+                difficultyLevel(difficulty)
+                break;
+            case 1:
+                difficultyLevel(level)
+                break;
+
+            case 2:
+                difficultyLevel(level)
+                break;
+
+            case 3:
+                difficultyLevel(level)
+                break;
+            case 4:
+                choice = 0;
+                score = 0;
+                circle.reset();
+                win = false;
+                for (let i = 0; i < cols; i++) {
+                    for (let j = 0; j < rows; j++) {
+                        apples[i][j].appearing = true;
+                    }
+                }
+                raquette.x = (canvas.width / 2) - (raquette.width / 2)
+                break;
+        }
+    }
+}
+
+function difficultyLevel(level) {
+    switch (level) {
+        case 1:
+            // Easy
+            handleDifficulty(2, 1, 2, 5, 85)
+            break;
+
+        case 2:
+            // Medium
+            handleDifficulty(3, 2, 3, 6, 75)
+            break;
+
+        case 3:
+            // Hard
+            handleDifficulty(5, 3, 4, 7, 65)
+            break;
+    }
+}
+
+function handleDifficulty(row, diff, speedCircle, speedRaquette, widthRaquette) {
+    rows = row
+    difficulty = diff
+    circle.handleSpeed(speedCircle);
+    raquette.speed = speedRaquette;
+    raquette.width = widthRaquette;
+}
+
+let array_de_boutons = [
+    new Btn(350, 300, 100, 50, 'Start'),
+    new Btn(150, 200, 100, 50, 'Easy'),
+    new Btn(350, 200, 100, 50, 'Medium'),
+    new Btn(550, 200, 100, 50, 'Hard'),
+    new Btn(350, 250, 100, 50, 'Over')
+]
 
 function Circle() {
 
-    var initValues = [-2, -1, 1, 2];
-    this.dx = initValues[Math.round(Math.random() * 2)];
-    this.dy = Math.random() * 2;
+    let initValues = [-2, 2];
+    this.dx = initValues[Math.round(Math.random())];
+    this.dy = 1;
     this.x = canvas.width / 2;
     this.y = 300;
     this.radius = 10
 
-    var red = Math.random() * 255,
+    let red = Math.random() * 255,
         green = Math.random() * 255,
         blue = Math.random() * 255;
 
+    this.reset = () => {
+        this.dx = initValues[Math.round(Math.random())];
+        this.dy = 1;
+        this.x = canvas.width / 2;
+        this.y = 300;
+    }
+
+    this.handleSpeed = (s) => {
+        let arr = [s, -s]
+        this.dx = arr[Math.round(Math.random())];
+    }
 
     this.draw = () => {
         ctx.beginPath();
@@ -43,32 +143,26 @@ function Circle() {
 
     this.update = () => {
 
-        // Rebon avec les mures
         if (this.x + this.radius > canvas.width || this.x - this.radius < 0)
             this.dx = -this.dx;
 
-        // Rebon avec le plafond
         if (this.y - this.radius < 0)
             this.dy = -this.dy;
 
-        // Rattraper la ball avec le cote gauche de la raquette
         if (this.y + this.radius >= raquette.y && this.y + this.radius < raquette.y + raquette.height &&
-            Math.abs(this.x) + this.radius >= raquette.x && Math.abs(this.x) + this.radius < raquette.x + raquette.width / 2) {
+            this.x + this.radius >= raquette.x && this.x + this.radius < raquette.x + raquette.width / 2) {
             this.dy = -this.dy;
             (this.dx > 0) ? this.dx = -this.dx : this.dx = this.dx;
         }
 
-        // Rattraper la ball avec le cote groit de la raquette
         if (this.y + this.radius >= raquette.y && this.y + this.radius < raquette.y + raquette.height &&
-            Math.abs(this.x) + this.radius > raquette.x + raquette.width / 2 && Math.abs(this.x) + this.radius <= raquette.x + raquette.width) {
+            this.x + this.radius > raquette.x + raquette.width / 2 && this.x + this.radius <= raquette.x + raquette.width) {
             this.dy = -this.dy;
             (this.dx < 0) ? this.dx = -this.dx : this.dx = this.dx
         }
 
-        // Si la ball depasse la raquette
         if (this.y > canvas.height) {
-            this.dx = this.dy = 0;
-            console.log('Game Over !!')
+            choice = 2;
         }
 
         this.x += this.dx;
@@ -76,9 +170,11 @@ function Circle() {
 
         this.draw();
     }
+
+
 }
 
-var circle = new Circle()
+let circle = new Circle()
 
 function Apple(x, y) {
     this.img = new Image();
@@ -95,7 +191,7 @@ function Apple(x, y) {
         }
     }
 
-    this.detectCollision = () => {
+    this.handleCollision = () => {
         if (this.appearing == true) {
             if (circle.x > this.x && circle.x < this.x + this.width && circle.y > this.y && circle.y < this.y + this.height) {
                 circle.dy = -circle.dy;
@@ -106,48 +202,113 @@ function Apple(x, y) {
     }
 }
 
-const appleWidth = 75;
-const appleHight = 20;
-const padding = 10;
-const marginTop = 50;
-const marginLeft = 25;
-const rows = 5;
-const cols = 9;
-var posX, posY;
 
-var apples = [];
-for (var i = 0; i < cols; i++) {
+let posX, posY;
+let apples = [];
+for (let i = 0; i < cols; i++) {
     apples[i] = [];
-    for (var j = 0; j < rows; j++) {
+    for (let j = 0; j < rows; j++) {
         posX = (i * (appleWidth + padding)) + marginLeft;
         posY = (j * (appleHight + padding)) + marginTop;
-        apples[i][j] = new Apple(posX,posY);
+        apples[i][j] = new Apple(posX, posY);
     }
 }
 
 function drawApples() {
-    for (var i = 0; i < cols; i++) {
-        for (var j = 0; j < rows; j++) {
+    for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
             apples[i][j].drawApple();
-            apples[i][j].detectCollision();
+            apples[i][j].handleCollision();
+        }
+    }
+}
+
+function drawFirstFrame() {
+    ctx.fillStyle = ("#808080");
+    for (let i = 0; i < array_de_boutons.length; i++) {
+        if (array_de_boutons[i].name != "Over")
+            ctx.fillRect(
+                array_de_boutons[i].x,
+                array_de_boutons[i].y,
+                array_de_boutons[i].width,
+                array_de_boutons[i].height);
+    }
+}
+
+
+function drawDifficultyText() {
+    ctx.fillStyle = ("#000000");
+    ctx.font = "16px Fantasy";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for (let i = 0; i < array_de_boutons.length; i++) {
+        if (array_de_boutons[i].name != "Over") ctx.fillText(array_de_boutons[i].name, array_de_boutons[i].x + 50, array_de_boutons[i].y + 25);
+    }
+    if (difficulty == 1) ctx.fillText("Difficulty: Easy", 400, 100);
+    else if (difficulty == 2) ctx.fillText("Difficulty: Medium", 400, 100);
+    else if (difficulty == 3) ctx.fillText("Difficulty: Hard", 400, 100);
+}
+
+function drawLastFrame() {
+    ctx.fillStyle = ("#808080");
+    ctx.fillRect(350, 250, 100, 50);
+}
+
+function drawEndStateText() {
+    ctx.fillStyle = ("#000000");
+    ctx.font = "16px Fantasy";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Reset", 350 + 50, 250 + 25);
+    if (win) ctx.fillText("You Win !", 400, 100);
+    else ctx.fillText("Game Over !", 400, 100);
+    ctx.fillText("Score: " + score, 400, 200);
+
+}
+
+function checkScore() {
+    if (difficulty == 1) {
+        if (score == 18) {
+            win = true;
+            choice = 2;
+        }
+    }
+    else if (difficulty == 2) {
+        if (score == 27) {
+            win = true;
+            choice = 2;
+        }
+    }
+    else if (difficulty == 3) {
+        if (score >= 45) {
+            win = true;
+            choice = 2;
         }
     }
 }
 
 function animate() {
-    requestAnimationFrame(animate);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    circle.update();
-    createRaquette();
-    moveRaquette();
-    drawApples();
-    drawScoreText();
-
+    requestAnimationFrame(animate);
+    if (choice == 0) {
+        drawFirstFrame();
+        drawDifficultyText();
+    }
+    else if (choice == 1) {
+        circle.update();
+        createRaquette();
+        moveRaquette();
+        drawApples();
+        drawScoreText();
+        checkScore();
+    }
+    else if (choice == 2) {
+        drawLastFrame();
+        drawEndStateText();
+    }
 }
 
-
 animate();
-
 
 
 
@@ -170,15 +331,30 @@ function moveRaquette() {
 function drawScoreText() {
     ctx.font = "16px Fantasy";
     ctx.fillStyle = "red";
-    ctx.fillText("Score: " + score, 8, 20);
+    img = new Image();
+    img.src = "apple.png";
+    ctx.drawImage(img, 15, 8, 20, 20);
+    ctx.fillText(score, 50, 20);
 }
 
-window.addEventListener('keydown', function (e) {
+window.addEventListener('keydown', (e) => {
     keys[e.keyCode] = true;
     raquette.moving = true;
 });
 
-window.addEventListener('keyup', function (e) {
+window.addEventListener('keyup', (e) => {
     keys[e.keyCode] = false;
     raquette.moving = false;
 });
+
+
+window.addEventListener('click', (e) => {
+    for (let i = 0; i < array_de_boutons.length; i++) {
+        if (e.offsetX >= array_de_boutons[i].x && e.offsetX <= array_de_boutons[i].x + array_de_boutons[i].width &&
+            e.offsetY >= array_de_boutons[i].y && e.offsetY <= array_de_boutons[i].y + array_de_boutons[i].height) {
+            array_de_boutons[i].handleOnClick(i);
+        }
+
+    }
+
+})
