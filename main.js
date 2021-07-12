@@ -44,10 +44,13 @@ function Btn(x, y, width, height, name) {
 
         switch (level) {
             case 0:
-                choice = 1
-                difficultyLevel(difficulty)
+                    choice = 1
+                    difficultyLevel(difficulty)
+                
+
                 break;
             case 1:
+
                 difficultyLevel(level)
                 break;
 
@@ -59,16 +62,17 @@ function Btn(x, y, width, height, name) {
                 difficultyLevel(level)
                 break;
             case 4:
-                choice = 0;
-                score = 0;
-                circle.reset();
-                win = false;
-                for (let i = 0; i < cols; i++) {
-                    for (let j = 0; j < rows; j++) {
-                        apples[i][j].appearing = true;
+                if (choice == 2) {
+                    choice = 0;
+                    score = 0;
+                    circle.reset();
+                    for (let i = 0; i < cols; i++) {
+                        for (let j = 0; j < rows; j++) {
+                            apples[i][j].appearing = true;
+                        }
                     }
+                    raquette.x = (canvas.width / 2) - (raquette.width / 2)
                 }
-                raquette.x = (canvas.width / 2) - (raquette.width / 2)
                 break;
         }
     }
@@ -129,8 +133,8 @@ function Circle() {
         this.y = 300;
     }
 
-    this.handleSpeed = (s) => {
-        let arr = [s, -s]
+    this.handleSpeed = (level) => {
+        let arr = [level, -level]
         this.dx = arr[Math.round(Math.random())];
     }
 
@@ -150,13 +154,13 @@ function Circle() {
             this.dy = -this.dy;
 
         if (this.y + this.radius >= raquette.y && this.y + this.radius < raquette.y + raquette.height &&
-            this.x + this.radius >= raquette.x && this.x + this.radius < raquette.x + raquette.width / 2) {
+            Math.abs(this.x) + this.radius >= raquette.x && Math.abs(this.x) + this.radius < raquette.x + raquette.width / 2) {
             this.dy = -this.dy;
             (this.dx > 0) ? this.dx = -this.dx : this.dx = this.dx;
         }
 
         if (this.y + this.radius >= raquette.y && this.y + this.radius < raquette.y + raquette.height &&
-            this.x + this.radius > raquette.x + raquette.width / 2 && this.x + this.radius <= raquette.x + raquette.width) {
+            Math.abs(this.x) + this.radius > raquette.x + raquette.width / 2 && Math.abs(this.x) + this.radius <= raquette.x + raquette.width) {
             this.dy = -this.dy;
             (this.dx < 0) ? this.dx = -this.dx : this.dx = this.dx
         }
@@ -226,12 +230,11 @@ function drawApples() {
 function drawFirstFrame() {
     ctx.fillStyle = ("#808080");
     for (let i = 0; i < array_de_boutons.length; i++) {
-        if (array_de_boutons[i].name != "Over")
-            ctx.fillRect(
-                array_de_boutons[i].x,
-                array_de_boutons[i].y,
-                array_de_boutons[i].width,
-                array_de_boutons[i].height);
+        if (array_de_boutons[i].name != "Over") ctx.fillRect(
+            array_de_boutons[i].x,
+            array_de_boutons[i].y,
+            array_de_boutons[i].width,
+            array_de_boutons[i].height);
     }
 }
 
@@ -313,7 +316,6 @@ animate();
 
 
 function createRaquette() {
-    ctx.fillStyle = raquette.color;
     ctx.fillRect(raquette.x, raquette.y, raquette.width, raquette.height);
 }
 
@@ -337,22 +339,25 @@ function drawScoreText() {
     ctx.fillText(score, 50, 20);
 }
 
-window.addEventListener('keydown', (e) => {
+window.addEventListener('keydown', function (e) {
     keys[e.keyCode] = true;
     raquette.moving = true;
 });
 
-window.addEventListener('keyup', (e) => {
+window.addEventListener('keyup', function (e) {
     keys[e.keyCode] = false;
     raquette.moving = false;
 });
 
 
-window.addEventListener('click', (e) => {
+window.addEventListener('click', function (e) {
     for (let i = 0; i < array_de_boutons.length; i++) {
         if (e.offsetX >= array_de_boutons[i].x && e.offsetX <= array_de_boutons[i].x + array_de_boutons[i].width &&
             e.offsetY >= array_de_boutons[i].y && e.offsetY <= array_de_boutons[i].y + array_de_boutons[i].height) {
-            array_de_boutons[i].handleOnClick(i);
+                if ((choice == 0 && i < 3) || (choice == 2 && i==3)) {
+                    array_de_boutons[i].handleOnClick(i);
+                }
+            
         }
 
     }
